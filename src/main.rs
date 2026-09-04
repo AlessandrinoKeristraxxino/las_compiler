@@ -41,8 +41,9 @@ fn main() -> io::Result<()> {
 
     match matches.subcommand() {
         Some(("new", sub_matches)) => {
-            fs::write("main.las", "let x = 10;\nprintln!(x);")?;
-            fs::write(
+            let _ = fs::create_dir_all("src")?;
+            let _ = fs::write("src/main.las", "let x = 10;\nprintln!(x);")?;
+            let _ = fs::write(
                 "config.lasd",
                 format!(
                     "project = {{ name: {} }}",
@@ -63,7 +64,7 @@ fn main() -> io::Result<()> {
 }
 
 fn compile() -> io::Result<()> {
-    let code_str = read_to_string("test/main.las")?;
+    let code_str = read_to_string("src/main.las")?;
     let source_code: Vec<char> = code_str.chars().collect();
 
     let mut lexer = Lexer::new(&source_code);

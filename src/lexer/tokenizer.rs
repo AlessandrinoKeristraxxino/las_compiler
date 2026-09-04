@@ -139,7 +139,7 @@ impl Lexer {
     pub fn lexing(&mut self) -> Vec<Token> {
         let mut tokens: Vec<Token> = Vec::new();
         
-        while self.pos <= self.source_code.len() {
+        while self.pos < self.source_code.len() {
             self.check_whitespace();
             self.check_punctuation(&mut tokens);
             self.check_keyword(&mut tokens);
