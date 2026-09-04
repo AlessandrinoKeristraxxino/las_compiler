@@ -83,7 +83,7 @@ fn compile() -> io::Result<()> {
 
     let _ = fs::write("main.wasm", wasm_code)?;
     let _ = fs::write("glue.js", glue_code)?;
-    let _ = fs::write("index.html", "<DOCTYPE html><html><head><title>Simple LAS Page</title></head><body><script src=\"glue.js\"</body></html>")?;
+    let _ = fs::write("index.html", "<DOCTYPE html><html><head><title>Simple LAS Page</title></head><body><script src=\"glue.js\"></script></body></html>")?;
 
     Ok(())
 }

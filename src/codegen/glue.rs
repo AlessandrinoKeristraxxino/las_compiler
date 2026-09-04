@@ -49,28 +49,21 @@ impl GlueCodegen {
     pub fn generate_code(&mut self) -> String {
         let used_func = self.check_used_func();
 
-        if used_func.print_num == false && used_func.println_num == false {
-            self.code = format!("
-                const importObject = {{}};\n"
-            );
+        let import_object = if !used_func.print_num && !used_func.println_num {
+            "const importObject = {};\n".to_string()
         } else {
-            self.code = format!("
-                const importObject = {{\n
-                    env: {{\n
-                        print_num: function(number) {{ console.log(number.to_string()) }},\n
-                        println_num: function(number) {{ console.log(`${{number.to_string()}}\\n`) }}\n
-                    }}\n
-                }};\n"
-            );
-        }
+            "const importObject = {\n  env: {\n    print_num: function(number) { console.log(number.toString()); },\n    println_num: function(number) { console.log(number.toString() + '\\n'); }\n  }\n};\n".to_string()
+        };
 
-        self.code.push_str(&format!("
-            WebAssembly.instantiateStreaming(fetch('main.wasm', importObject)\n
-                .then(obj => {{\n
-                    memory = obj.instance.exports.memory;\n
-                    obj.instance.exports.main();\n
-                }});"
-        ));
+        self.code = import_object;
+        self.code.push_str(
+            "let memory;\n\
+            WebAssembly.instantiateStreaming(fetch('main.wasm'), importObject)\n\
+            .then(obj => {\n\
+                memory = obj.instance.exports.memory;\n\
+                obj.instance.exports.main();\n\
+            });\n"
+        );
 
         self.code.clone()
     }

@@ -36,7 +36,7 @@ impl Lexer {
     fn check_value(&mut self, tokens: &mut Vec<Token>) -> io::Result<()> {
         let mut number = String::new();
 
-        while self.source_code[self.pos].is_alphanumeric() {
+        while self.pos < self.source_code.len() && self.source_code[self.pos].is_ascii_digit() {
             number.push(self.source_code[self.pos]);
             self.advance(1, 1, 1);
         }
@@ -49,8 +49,8 @@ impl Lexer {
             column: self.column,
         });
 
-        Ok(())
-    }
+    Ok(())
+}
 
     fn check_punctuation(&mut self, tokens: &mut Vec<Token>) {
         match self.source_code[self.pos] {
@@ -139,7 +139,7 @@ impl Lexer {
     pub fn lexing(&mut self) -> Vec<Token> {
         let mut tokens: Vec<Token> = Vec::new();
         
-        while self.pos >= self.source_code.len() {
+        while self.pos <= self.source_code.len() {
             self.check_whitespace();
             self.check_punctuation(&mut tokens);
             self.check_keyword(&mut tokens);

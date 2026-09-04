@@ -388,7 +388,7 @@ impl Parser {
         let mut errors = 0;
         let mut is_panicked = false;
 
-        while self.current <= self.tokens.len() {
+        while self.current < self.tokens.len() {
             let (panicked, errors_temp) = self.parse_statement(&mut statements);
             self.current += 1;
 
