@@ -199,6 +199,9 @@ impl Parser {
                                                         column: _ident_column,
                                                         ..
                                                     } => {
+                                                        self.current += 1;
+                                                        let (line, column) = self.get_pos();
+
                                                         match self.check_semicolon() {
                                                             true => {
                                                                 statements.push(Stmt::Print(Expr::Variable(var_name.clone())));
@@ -296,6 +299,9 @@ impl Parser {
                                                         column: _ident_column,
                                                         ..
                                                     } => {
+                                                        self.current += 1;
+                                                        let (line, column) = self.get_pos();
+
                                                         match self.check_semicolon() {
                                                             true => {
                                                                 statements.push(Stmt::Println(Expr::Variable(var_name.clone())));
@@ -399,9 +405,9 @@ impl Parser {
         }
 
         if is_panicked {
-            println!("Program panicked with {} errors.", errors);
-            println!("Retry!");
-            panic!();
+            eprintln!("Program panicked with {} errors.", errors);
+            eprintln!("Retry!");
+            std::process::exit(1);
         }
 
         statements

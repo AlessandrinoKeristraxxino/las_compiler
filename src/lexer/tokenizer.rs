@@ -21,15 +21,22 @@ impl Lexer {
         }
     }
 
-    fn advance(&mut self, pos: usize, line: usize, column: usize) {
-        self.pos += pos;
-        self.line += line;
-        self.column += column;
+    fn advance(&mut self) {
+        if self.pos < self.source_code.len() {
+            if self.source_code[self.pos] == '\n' {
+                self.line += 1;
+                self.column = 0;
+            } else {
+                self.column += 1;
+            }
+
+            self.pos += 1;
+        }
     }
 
     fn check_whitespace(&mut self) {
         while self.pos < self.source_code.len() && self.source_code[self.pos].is_whitespace() {
-            self.advance(1, 2, 3);
+            self.advance();
         }
     }
 
@@ -38,7 +45,7 @@ impl Lexer {
 
         while self.pos < self.source_code.len() && self.source_code[self.pos].is_ascii_digit() {
             number.push(self.source_code[self.pos]);
-            self.advance(1, 1, 1);
+            self.advance();
         }
 
         let value = number.parse::<i64>().map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
@@ -61,7 +68,7 @@ impl Lexer {
                     column: self.column,
                 });
 
-                self.advance(1, 1, 1);
+                self.advance();
             },
             ')' => {
                 tokens.push(Token {
@@ -70,7 +77,7 @@ impl Lexer {
                     column: self.column,
                 });
 
-                self.advance(1, 1, 1);
+                self.advance();
             },
             ';' => {
                 tokens.push(Token {
@@ -79,7 +86,7 @@ impl Lexer {
                     column: self.column,
                 });
 
-                self.advance(1, 1, 1);
+                self.advance();
             },
             '=' => {
                 tokens.push(Token {
@@ -88,20 +95,24 @@ impl Lexer {
                     column: self.column,
                 });
 
-                self.advance(1, 1, 1);
+                self.advance();
             },
             _ => {}
         }
     }
 
     fn check_keyword(&mut self, tokens: &mut Vec<Token>) {
+        if !self.source_code[self.pos].is_alphabetic() {
+            return;
+        }
+
         let mut keyword = String::new();
 
         while self.pos < self.source_code.len() && (
             self.source_code[self.pos].is_alphanumeric() || self.source_code[self.pos] == '!'
         ) {
             keyword.push(self.source_code[self.pos]);
-            self.advance(1, 1, 1);
+            self.advance();
         }
 
         match keyword.as_str() {
@@ -138,18 +149,26 @@ impl Lexer {
 
     pub fn lexing(&mut self) -> Vec<Token> {
         let mut tokens: Vec<Token> = Vec::new();
-        
+
         while self.pos < self.source_code.len() {
             self.check_whitespace();
-            self.check_punctuation(&mut tokens);
-            self.check_keyword(&mut tokens);
-            
-            match self.check_value(&mut tokens) {
-                Ok(_) => {},
-                Err(_) => {}
+
+            if self.pos >= self.source_code.len() {
+                break;
+            }
+
+            let c = self.source_code[self.pos];
+
+            if c.is_ascii_digit() {
+                let _ = self.check_value(&mut tokens);
+            } else if c.is_alphabetic() {
+                self.check_keyword(&mut tokens);
+            } else {
+                self.check_punctuation(&mut tokens);
             }
         }
 
+        println!("{:#?}", tokens);
         println!("Lexing completed....\n");
 
         tokens

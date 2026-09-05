@@ -13,7 +13,7 @@ use clap::{Arg, Command};
 use std::{env, fs::{
         self,
         read_to_string,
-    }, io
+    }, io::{self, Read, Write}, net::TcpListener
 };
 
 use crate::codegen::glue::GlueCodegen;
@@ -37,6 +37,10 @@ fn main() -> io::Result<()> {
             Command::new("build")
             .about("Build your LampScript project")
         )
+        .subcommand(
+            Command::new("serve")
+            .about("Build and serve your LampScript project")
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -59,8 +63,12 @@ fn main() -> io::Result<()> {
             let _ = fs::write(".gitignore", "/target");
         },
         Some(("build", _sub_matches)) => {
-            let _ = compile();
-            println!("Compilation completed succeffully")
+            compile()?;
+            println!("Compilation completed successfully")
+        },
+        Some(("serve", _sub_matches)) => {
+            compile()?;
+            serve()?;
         }
         _ => unreachable!(),
     }
@@ -92,4 +100,62 @@ fn compile() -> io::Result<()> {
     let _ = fs::write("index.html", "<DOCTYPE html><html><head><title>Simple LAS Page</title></head><body><script src=\"glue.js\"></script></body></html>")?;
 
     Ok(())
+}
+
+fn serve() -> io::Result<()> {
+    let listener = TcpListener::bind("127.0.0.1:8000")?;
+    println!("Serving the project at http://127.0.0.1:8000");
+
+    for stream in listener.incoming() {
+        let mut stream = stream?;
+        let mut request = [0; 1024];
+        stream.read(&mut request)?;
+
+        let request_line = String::from_utf8_lossy(&request);
+        let path = request_line
+            .lines()
+            .next()
+            .and_then(|line| line.split_whitespace().nth(1))
+            .unwrap_or("/");
+
+        let file_name = match path {
+            "/" | "/index.html" => "index.html",
+            "/glue.js" => "glue.js",
+            "/main.wasm" => "main.wasm",
+            _ => {
+                write_response(&mut stream, "404 Not Found", "text/plain", b"Not Found")?;
+                continue;
+            }
+        };
+
+        match fs::read(file_name) {
+            Ok(contents) => {
+                let content_type = match file_name {
+                    "main.wasm" => "application/wasm",
+                    "glue.js" => "text/javascript; charset=utf-8",
+                    _ => "text/html; charset=utf-8",
+                };
+                write_response(&mut stream, "200 OK", content_type, &contents)?;
+            }
+            Err(_) => {
+                write_response(&mut stream, "404 Not Found", "text/plain", b"Not Found")?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn write_response(
+    stream: &mut std::net::TcpStream,
+    status: &str,
+    content_type: &str,
+    body: &[u8],
+) -> io::Result<()> {
+    write!(
+        stream,
+        "HTTP/1.1 {status}\r\nContent-Type: {content_type}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+        body.len()
+    )?;
+    stream.write_all(body)
 }
