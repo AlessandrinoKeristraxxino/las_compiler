@@ -45,7 +45,7 @@ impl WasmCodegen {
             Stmt::Print(identifier) => {
                 if let Expr::Variable(name) = identifier {
                     let code_str = format!("
-                        (call $print_num (local.get {}))",
+                        (call $print_num (local.get ${}))",
                         name
                     );
 
@@ -56,7 +56,7 @@ impl WasmCodegen {
             Stmt::Println(identifier) => {
                 if let Expr::Variable(name) = identifier {
                     let code_str = format!("
-                        (call $println_num (local.get {}))",
+                        (call $println_num (local.get ${}))",
                         name
                     );
 

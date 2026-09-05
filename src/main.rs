@@ -87,7 +87,9 @@ fn compile() -> io::Result<()> {
     let statements = parser.parse();
 
     let mut wasm_codegen = WasmCodegen::new(&statements);
-    let (wasm_code, used_func) = wasm_codegen.generate_code();
+    let (wat_code, used_func) = wasm_codegen.generate_code();
+    let wasm_code = wat::parse_str(&wat_code)
+        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
 
     let mut glue_codegen = GlueCodegen::new(used_func);
     let glue_code = glue_codegen.generate_code();
@@ -122,6 +124,10 @@ fn serve() -> io::Result<()> {
             "/" | "/index.html" => "index.html",
             "/glue.js" => "glue.js",
             "/main.wasm" => "main.wasm",
+            "/favicon.ico" => {
+                write_response(&mut stream, "204 No Content", "image/x-icon", &[])?;
+                continue;
+            }
             _ => {
                 write_response(&mut stream, "404 Not Found", "text/plain", b"Not Found")?;
                 continue;
