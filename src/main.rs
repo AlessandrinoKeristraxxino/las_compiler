@@ -28,7 +28,7 @@ fn main() -> io::Result<()> {
             Command::new("new")
                 .about("Create a new LampScript project")
                 .arg(
-                    Arg::new("Project Name")
+                    Arg::new("project_name")
                         .required(true)
                         .help("Name of the project")
                 ),
@@ -41,13 +41,18 @@ fn main() -> io::Result<()> {
 
     match matches.subcommand() {
         Some(("new", sub_matches)) => {
+            let project_name = sub_matches.get_one::<String>("project_name").unwrap();
+            
+            let _ = fs::create_dir_all(project_name);
+            let _ = env::set_current_dir(format!("{}", project_name));
+
             let _ = fs::create_dir_all("src")?;
             let _ = fs::write("src/main.las", "let x = 10;\nprintln!(x);")?;
             let _ = fs::write(
                 "config.lasd",
                 format!(
                     "project = {{ name: {} }}",
-                    sub_matches.get_one::<String>("Project Name").unwrap()
+                    project_name
                 ),
             )?;
             let _ = fs::write("README.md", "");
