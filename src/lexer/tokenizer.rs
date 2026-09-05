@@ -28,8 +28,8 @@ impl Lexer {
     }
 
     fn check_whitespace(&mut self) {
-        if self.source_code[self.pos] == ' ' {
-            self.advance(1, 1, 1);
+        while self.pos < self.source_code.len() && self.source_code[self.pos].is_whitespace() {
+            self.advance(1, 2, 3);
         }
     }
 

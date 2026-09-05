@@ -1,7 +1,7 @@
 # crate/Cargo.toml
 
 [package]
-name = "las_compiler"
+name = "las"
 version = "0.1.0"
 edition = "2024"
 
