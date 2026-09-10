@@ -40,6 +40,11 @@ fn main() -> io::Result<()> {
         .subcommand(
             Command::new("serve")
             .about("Build and serve your LampScript project")
+            .arg(
+                Arg::new("port")
+                    .required(false)
+                    .help("Port")
+            )
         )
         .get_matches();
 
@@ -67,9 +72,11 @@ fn main() -> io::Result<()> {
             compile()?;
             println!("Compilation completed successfully")
         },
-        Some(("serve", _sub_matches)) => {
+        Some(("serve", sub_matches)) => {
+            let port = sub_matches.get_one::<&str>("port").unwrap();
+
             compile()?;
-            serve()?;
+            serve(&port)?;
         }
         _ => unreachable!(),
     }
@@ -105,9 +112,9 @@ fn compile() -> io::Result<()> {
     Ok(())
 }
 
-fn serve() -> io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:8000")?;
-    println!("Serving the project at http://127.0.0.1:8000");
+fn serve(port: &str) -> io::Result<()> {
+    let listener = TcpListener::bind(format!("127.0.0.1:{}", port))?;
+    println!("Serving the project at http://127.0.0.1:{}", port);
 
     for stream in listener.incoming() {
         let mut stream = stream?;
