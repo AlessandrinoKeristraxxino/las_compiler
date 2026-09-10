@@ -5,7 +5,8 @@ use super::Error;
 pub enum VariableErrors {
     ExpectedIdentiefier,
     ExpectedAssign,
-    ExpectedValue,
+    ExpectedNumber,
+    ExpectedString,
 }
 
 impl Error for VariableErrors {
@@ -15,14 +16,18 @@ impl Error for VariableErrors {
                 println!("Syntax Error: the compiler panicked at line {} column {}\n", line, column);
                 println!("Syntax Error: Expected Assign `=`");
             },
-            VariableErrors::ExpectedValue => {
+            VariableErrors::ExpectedNumber => {
                 println!("Syntax Error: the compiler panicked at line {} column {}\n", line, column);
-                println!("Syntax Error: Expected Value `i64`");
+                println!("Syntax Error: Expected Number `i64`");
             },
             VariableErrors::ExpectedIdentiefier => {
                 println!("Syntax Error: the compiler panicked at line {} column {}\n", line, column);
                 println!("Syntax Error: Expected Identifier `variable_name`");
             },
+            VariableErrors::ExpectedString => {
+                println!("Syntax Error: the compiler panicked at line {} column {}\n", line, column);
+                println!("Syntax Error: Expected String `\"string text\"`");
+            }
         }
     }
 }

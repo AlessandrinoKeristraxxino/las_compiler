@@ -7,6 +7,7 @@ pub enum GeneralErrors {
     ExpectedSemicolon,
     ExpectedLParen,
     ExpectedRParen,
+    ExpectedQuote,
 }
 
 impl Error for GeneralErrors {
@@ -23,7 +24,11 @@ impl Error for GeneralErrors {
             GeneralErrors::ExpectedRParen => {
                 println!("Syntax Error: the compiler panicked at line {} column {}\n", line, column);
                 println!("Syntax Error: Expected RParen `)`");
-            }
+            },
+            GeneralErrors::ExpectedQuote => {
+                println!("Syntax Error: the compiler panicked at line {} column {}\n", line, column);
+                println!("Syntax Error: Expected Quote `\"`");
+            },
         }
     }
 }

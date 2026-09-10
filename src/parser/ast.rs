@@ -10,6 +10,7 @@ use crate::errors::{
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expr {
     Number(i64),
+    String(String),
     Variable(String),
 }
 
@@ -78,22 +79,21 @@ impl Parser {
 
                                             if self.current < self.tokens.len() {
                                                 match &self.tokens[self.current] {
-                                                    // VALUE
+                                                    // NUMBER
                                                     Token {
-                                                        token_type: TokenType::Value(value),
+                                                        token_type: TokenType::Number(number),
                                                         line: _ident_line,
                                                         column: _ident_column,
                                                         ..
                                                     } => {
                                                         self.current += 1;
                                                         let (line, column) = self.get_pos();
-                                                        let var_value = value.clone();
 
                                                         match self.check_semicolon() {
                                                             true => {
                                                                 statements.push(Stmt::Let { 
                                                                     name,
-                                                                    value: Expr::Number(var_value)
+                                                                    value: Expr::Number(*number)
                                                                 });
                                                             },
                                                             false => {
@@ -107,12 +107,94 @@ impl Parser {
                                                                 errors += 1;
                                                             }
                                                         }
-                                                    }
+                                                    },
+                                                    // QUOTE
+                                                    Token {
+                                                        token_type: TokenType::Quote,
+                                                        line: _ident_line,
+                                                        column: _ident_column,
+                                                        ..
+                                                    } => {
+                                                        self.current += 1;
+                                                        let (line, column) = self.get_pos();
+
+                                                        if self.current < self.tokens.len() {
+                                                            match &self.tokens[self.current] {
+                                                                // STRING
+                                                                Token {
+                                                                    token_type: TokenType::String(string),
+                                                                    line: _ident_line,
+                                                                    column: _ident_column,
+                                                                    ..
+                                                                } => {
+                                                                    self.current += 1;
+                                                                    let (line, column) = self.get_pos();
+
+                                                                    if self.current < self.tokens.len() {
+                                                                        match &self.tokens[self.current] {
+                                                                            Token {
+                                                                                token_type: TokenType::Quote,
+                                                                                line: _ident_line,
+                                                                                column: _ident_column,
+                                                                            } => {
+                                                                                self.current += 1;
+                                                                                let (line, column) = self.get_pos();
+
+                                                                                match self.check_semicolon() {
+                                                                                    true => {
+                                                                                        statements.push(Stmt::Let { 
+                                                                                            name,
+                                                                                            value: Expr::String(string.clone()),
+                                                                                        });
+                                                                                    },
+                                                                                    false => {
+                                                                                        GeneralErrors::display(
+                                                                                            GeneralErrors::ExpectedSemicolon,
+                                                                                            &line,
+                                                                                            &column
+                                                                                        );
+
+                                                                                        is_panicked = true;
+                                                                                        errors += 1;
+                                                                                    }
+                                                                                }
+                                                                            },
+                                                                            _ => {
+                                                                                GeneralErrors::display(
+                                                                                    GeneralErrors::ExpectedQuote,
+                                                                                    &line,
+                                                                                    &column,
+                                                                                );
+
+                                                                                is_panicked = true;
+                                                                                errors += 1;
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                _ => {
+                                                                    VariableErrors::display(
+                                                            VariableErrors::ExpectedString,
+                                                                        &line,
+                                                                        &column,
+                                                                    );
+
+                                                                    is_panicked = true;
+                                                                    errors += 1;
+                                                                }
+                                                            }
+                                                        }
+                                                    },
                                                     _ => {
                                                         VariableErrors::display(
-                                                            VariableErrors::ExpectedValue,
+                                                            VariableErrors::ExpectedNumber,
                                                             &line,
                                                             &column
+                                                        );
+                                                        GeneralErrors::display(
+                                                            GeneralErrors::ExpectedQuote,
+                                                            &line,
+                                                            &column,
                                                         );
 
                                                         is_panicked = true;
@@ -231,9 +313,9 @@ impl Parser {
                                                 }
                                             }
                                         },
-                                        // VALUE
+                                        // NUMBER
                                         Token {
-                                            token_type: TokenType::Value(var_value),
+                                            token_type: TokenType::Number(number),
                                             line: _ident_line,
                                             column: _ident_column,
                                             ..
@@ -255,7 +337,7 @@ impl Parser {
 
                                                         match self.check_semicolon() {
                                                             true => {
-                                                                statements.push(Stmt::Print(Expr::Number(*var_value)));
+                                                                statements.push(Stmt::Print(Expr::Number(*number)));
                                                             },
                                                             false => {
                                                                 GeneralErrors::display(
@@ -282,11 +364,113 @@ impl Parser {
                                                 }
                                             }
                                         },
+                                        // QUOTE
+                                        Token {
+                                            token_type: TokenType::Quote,
+                                            line: _ident_line,
+                                            column: _ident_column,
+                                            ..
+                                        } => {
+                                            self.current += 1;
+                                            let (line, column) = self.get_pos();
+
+                                            if self.current < self.tokens.len() {
+                                                match &self.tokens[self.current] {
+                                                // STRING
+                                                    Token {
+                                                        token_type: TokenType::String(string),
+                                                        line: _ident_line,
+                                                        column: _ident_column,
+                                                        ..
+                                                    } => {
+                                                        self.current += 1;
+                                                        let (line, column) = self.get_pos();
+
+                                                        if self.current < self.tokens.len() {
+                                                            match &self.tokens[self.current] {
+                                                                Token {
+                                                                    token_type: TokenType::Quote,
+                                                                    line: _ident_line,
+                                                                    column: _ident_column,
+                                                                } => {
+                                                                    self.current += 1;
+                                                                    let (line, column) = self.get_pos();
+                                                                    
+                                                                    if self.current < self.tokens.len() {
+                                                                        match &self.tokens[self.current] {
+                                                                            Token {
+                                                                                token_type: TokenType::RParen,
+                                                                                line: _ident_line,
+                                                                                column: _ident_column,
+                                                                            } => {
+                                                                                self.current += 1;
+                                                                                let (line, column) = self.get_pos();
+
+                                                                                match self.check_semicolon() {
+                                                                                    true => {
+                                                                                        statements.push(Stmt::Print(Expr::String(string.clone())));
+                                                                                    },
+                                                                                    false => {
+                                                                                        GeneralErrors::display(
+                                                                                            GeneralErrors::ExpectedSemicolon,
+                                                                                            &line,
+                                                                                            &column,
+                                                                                        );
+
+                                                                                        is_panicked = true;
+                                                                                        errors += 1;
+                                                                                    },
+                                                                                }
+                                                                            },
+                                                                            _ => {
+                                                                                GeneralErrors::display(
+                                                                                    GeneralErrors::ExpectedRParen,
+                                                                                    &line,
+                                                                                    &column,
+                                                                                );
+
+                                                                                is_panicked = true;
+                                                                                errors += 1;
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                _ => {
+                                                                    GeneralErrors::display(
+                                                                        GeneralErrors::ExpectedQuote,
+                                                                        &line,
+                                                                        &column,
+                                                                    );
+
+                                                                    is_panicked = true;
+                                                                    errors += 1;
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    _ => {
+                                                        VariableErrors::display(
+                                                VariableErrors::ExpectedString,
+                                                            &line,
+                                                            &column,
+                                                        );
+
+                                                        is_panicked = true;
+                                                        errors += 1;
+                                                    }
+                                                }
+                                            }
+                                        },
                                         _ => {
                                             VariableErrors::display(
                                     VariableErrors::ExpectedIdentiefier,
                                                 &line,
                                                 &column
+                                            );
+                                            GeneralErrors::display(
+                                                GeneralErrors::ExpectedQuote,
+                                                &line,
+                                                &column,
                                             );
 
                                             is_panicked = true;
@@ -406,9 +590,9 @@ impl Parser {
                                                 }
                                             }
                                         },
-                                        // VALUE
+                                        // NUMBER
                                         Token {
-                                            token_type: TokenType::Value(var_value),
+                                            token_type: TokenType::Number(number),
                                             line: _ident_line,
                                             column: _ident_column,
                                             ..
@@ -430,7 +614,7 @@ impl Parser {
 
                                                         match self.check_semicolon() {
                                                             true => {
-                                                                statements.push(Stmt::Println(Some(Expr::Number(*var_value))));
+                                                                statements.push(Stmt::Println(Some(Expr::Number(*number))));
                                                             },
                                                             false => {
                                                                 GeneralErrors::display(
@@ -457,6 +641,103 @@ impl Parser {
                                                 }
                                             }
                                         },
+                                        // QUOTE
+                                        Token {
+                                            token_type: TokenType::Quote,
+                                            line: _ident_line,
+                                            column: _ident_column,
+                                            ..
+                                        } => {
+                                            self.current += 1;
+                                            let (line, column) = self.get_pos();
+
+                                            if self.current < self.tokens.len() {
+                                                match &self.tokens[self.current] {
+                                                // STRING
+                                                    Token {
+                                                        token_type: TokenType::String(string),
+                                                        line: _ident_line,
+                                                        column: _ident_column,
+                                                        ..
+                                                    } => {
+                                                        self.current += 1;
+                                                        let (line, column) = self.get_pos();
+
+                                                        if self.current < self.tokens.len() {
+                                                            match &self.tokens[self.current] {
+                                                                Token {
+                                                                    token_type: TokenType::Quote,
+                                                                    line: _ident_line,
+                                                                    column: _ident_column,
+                                                                } => {
+                                                                    self.current += 1;
+                                                                    let (line, column) = self.get_pos();
+                                                                    
+                                                                    if self.current < self.tokens.len() {
+                                                                        match &self.tokens[self.current] {
+                                                                            Token {
+                                                                                token_type: TokenType::RParen,
+                                                                                line: _ident_line,
+                                                                                column: _ident_column,
+                                                                            } => {
+                                                                                self.current += 1;
+                                                                                let (line, column) = self.get_pos();
+
+                                                                                match self.check_semicolon() {
+                                                                                    true => {
+                                                                                        statements.push(Stmt::Println(Some(Expr::String(string.clone()))));
+                                                                                    },
+                                                                                    false => {
+                                                                                        GeneralErrors::display(
+                                                                                            GeneralErrors::ExpectedSemicolon,
+                                                                                            &line,
+                                                                                            &column,
+                                                                                        );
+
+                                                                                        is_panicked = true;
+                                                                                        errors += 1;
+                                                                                    },
+                                                                                }
+                                                                            },
+                                                                            _ => {
+                                                                                GeneralErrors::display(
+                                                                                    GeneralErrors::ExpectedRParen,
+                                                                                    &line,
+                                                                                    &column,
+                                                                                );
+
+                                                                                is_panicked = true;
+                                                                                errors += 1;
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                },
+                                                                _ => {
+                                                                    GeneralErrors::display(
+                                                                        GeneralErrors::ExpectedQuote,
+                                                                        &line,
+                                                                        &column,
+                                                                    );
+
+                                                                    is_panicked = true;
+                                                                    errors += 1;
+                                                                }
+                                                            }
+                                                        }
+                                                    },
+                                                    _ => {
+                                                        VariableErrors::display(
+                                                VariableErrors::ExpectedString,
+                                                            &line,
+                                                            &column,
+                                                        );
+
+                                                        is_panicked = true;
+                                                        errors += 1;
+                                                    }
+                                                }
+                                            }
+                                        }
                                         _ => {
                                             VariableErrors::display(
                                     VariableErrors::ExpectedIdentiefier,
@@ -464,7 +745,12 @@ impl Parser {
                                                 &column
                                             );
                                             VariableErrors::display(
-                                                VariableErrors::ExpectedValue,
+                                                VariableErrors::ExpectedNumber,
+                                                &line,
+                                                &column,
+                                            );
+                                            GeneralErrors::display(
+                                                GeneralErrors::ExpectedQuote,
                                                 &line,
                                                 &column,
                                             );

@@ -57,6 +57,8 @@ impl WasmCodegen {
                     );
 
                     self.code.push_str(&code_str);
+                } else if let Expr::String(string) = identifier {
+                    
                 }
 
                 self.used_func.push(GlueFunc::PrintNum);

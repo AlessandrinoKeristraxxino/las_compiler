@@ -40,7 +40,7 @@ impl Lexer {
         }
     }
 
-    fn check_value(&mut self, tokens: &mut Vec<Token>) -> io::Result<()> {
+    fn check_number(&mut self, tokens: &mut Vec<Token>) -> io::Result<()> {
         let mut number = String::new();
 
         while self.pos < self.source_code.len() && self.source_code[self.pos].is_ascii_digit() {
@@ -51,13 +51,42 @@ impl Lexer {
         let value = number.parse::<i64>().map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
         tokens.push(Token {
-            token_type: TokenType::Value(value),
+            token_type: TokenType::Number(value),
             line: self.line,
             column: self.column,
         });
 
-    Ok(())
-}
+        Ok(())
+    }
+
+    fn check_string(&mut self, tokens: &mut Vec<Token>) {
+        if self.pos < self.source_code.len() && self.source_code[self.pos] == '"' {
+            tokens.push(Token {
+                token_type: TokenType::Quote,
+                line: self.line,
+                column: self.column,
+            });
+
+            let mut string = String::new();
+            self.advance();
+
+            while self.pos < self.source_code.len() && self.source_code[self.pos] != '"' {
+                string.push(self.source_code[self.pos]);
+                self.advance();
+            }
+
+            tokens.push(Token {
+                token_type: TokenType::String(string),
+                line: self.line,
+                column: self.column
+            });
+            tokens.push(Token {
+                token_type: TokenType::Quote,
+                line: self.line,
+                column: self.column,
+            });
+        }
+    }
 
     fn check_punctuation(&mut self, tokens: &mut Vec<Token>) {
         match self.source_code[self.pos] {
@@ -160,9 +189,10 @@ impl Lexer {
             let c = self.source_code[self.pos];
 
             if c.is_ascii_digit() {
-                let _ = self.check_value(&mut tokens);
+                let _ = self.check_number(&mut tokens);
             } else if c.is_alphabetic() {
                 self.check_keyword(&mut tokens);
+                self.check_string(&mut tokens);
             } else {
                 self.check_punctuation(&mut tokens);
             }

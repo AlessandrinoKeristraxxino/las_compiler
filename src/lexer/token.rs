@@ -13,7 +13,10 @@ pub enum TokenType {
     LParen,
     RParen,
 
-    Value(i64),
+    Quote,
+
+    Number(i64),
+    String(String),
 }
 
 #[derive(Debug, Clone)]
