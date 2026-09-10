@@ -168,7 +168,6 @@ impl Lexer {
             }
         }
 
-        println!("{:#?}", tokens);
         println!("Lexing completed....\n");
 
         tokens

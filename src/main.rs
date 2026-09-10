@@ -42,7 +42,8 @@ fn main() -> io::Result<()> {
             .about("Build and serve your LampScript project")
             .arg(
                 Arg::new("port")
-                    .required(false)
+                    .long("port")
+                    .default_value("3000")
                     .help("Port")
             )
         )
@@ -73,7 +74,7 @@ fn main() -> io::Result<()> {
             println!("Compilation completed successfully")
         },
         Some(("serve", sub_matches)) => {
-            let port = sub_matches.get_one::<&str>("port").unwrap();
+            let port = sub_matches.get_one::<String>("port").unwrap();
 
             compile()?;
             serve(&port)?;
