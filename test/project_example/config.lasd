@@ -1,0 +1,4 @@
+load std::config::Project;
+
+
+                    Project = { name: project_example }

@@ -49,19 +49,41 @@ impl WasmCodegen {
                         name
                     );
 
-                    self.used_func.push(GlueFunc::PrintNum);
                     self.code.push_str(&code_str);
-                }
-            },
-            Stmt::Println(identifier) => {
-                if let Expr::Variable(name) = identifier {
+                } else if let Expr::Number(value) = identifier {
                     let code_str = format!("
-                        (call $println_num (local.get ${}))",
-                        name
+                        (call $print_num (i64.const {}))",
+                        value
                     );
 
-                    self.used_func.push(GlueFunc::PrintlnNum);
                     self.code.push_str(&code_str);
+                }
+
+                self.used_func.push(GlueFunc::PrintNum);
+            },
+            Stmt::Println(expression) => {
+                if let Some(expression) = expression {
+                    if let Expr::Variable(name) = expression {
+                        let code_str = format!("
+                        (call $println_num (local.get ${}))",
+                            name
+                        );
+
+                        self.code.push_str(&code_str);
+                    } else if let Expr::Number(value) = expression {
+                        let code_str = format!("
+                        (call $println_num (i64.const {}))",
+                            value
+                        );
+
+                        self.code.push_str(&code_str);
+                    }
+
+                    self.used_func.push(GlueFunc::PrintlnNum);
+                } else {
+                    self.code.push_str("
+                        (call $println)");
+                    self.used_func.push(GlueFunc::Println);
                 }
             }
         }
@@ -71,6 +93,7 @@ impl WasmCodegen {
         let header = "(module\n\
             (import \"env\" \"print_num\" (func $print_num (param i64)))\n\
             (import \"env\" \"println_num\" (func $println_num (param i64)))\n\
+            (import \"env\" \"println\" (func $println))\n\
             (func $main\n";
         let footer = ")\n(export \"main\" (func $main))\n)";
 

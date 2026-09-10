@@ -51,11 +51,12 @@ fn main() -> io::Result<()> {
             let _ = env::set_current_dir(format!("{}", project_name));
 
             let _ = fs::create_dir_all("src")?;
-            let _ = fs::write("src/main.las", "let x = 10;\nprintln!(x);")?;
+            let _ = fs::write("src/main.las", "let x = 10;\nprintln!(x);\nprintln!(10);")?;
             let _ = fs::write(
                 "config.lasd",
                 format!(
-                    "project = {{ name: {} }}",
+                    "load std::config::Project;\n\n
+                    Project = {{ name: {} }}",
                     project_name
                 ),
             )?;

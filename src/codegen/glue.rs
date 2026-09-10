@@ -4,12 +4,14 @@
 pub enum GlueFunc {
     PrintNum,
     PrintlnNum,
+    Println,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 struct UsedFunc {
     print_num: bool,
     println_num: bool,
+    println: bool,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -30,6 +32,7 @@ impl GlueCodegen {
         let mut used_func = UsedFunc {
             print_num: false,
             println_num: false,
+            println: false,
         };
 
         for func in &self.used_func {
@@ -39,6 +42,9 @@ impl GlueCodegen {
                 },
                 GlueFunc::PrintNum => {
                     used_func.print_num = true;
+                },
+                GlueFunc::Println => {
+                    used_func.println = true;
                 }
             }
         }
@@ -49,10 +55,10 @@ impl GlueCodegen {
     pub fn generate_code(&mut self) -> String {
         let used_func = self.check_used_func();
 
-        let import_object = if !used_func.print_num && !used_func.println_num {
+        let import_object = if !used_func.print_num && !used_func.println_num && !used_func.println {
             "const importObject = {};\n".to_string()
         } else {
-            "const importObject = {\n  env: {\n    print_num: function(number) { console.log(number.toString()); },\n    println_num: function(number) { console.log(number.toString() + '\\n'); }\n  }\n};\n".to_string()
+            "const importObject = {\n  env: {\n    print_num: function(number) { console.log(number.toString()); },\n    println_num: function(number) { console.log(number.toString() + '\\n'); },\n    println: function() { console.log(''); }\n  }\n};\n".to_string()
         };
 
         self.code = import_object;
